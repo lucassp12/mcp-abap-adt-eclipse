@@ -1,0 +1,2 @@
+Esta pasta recebe, durante o build no GitHub Actions, o Node.js portátil e o servidor
+mcp-abap-adt (script .github/scripts/prepare-runtime.sh). O conteúdo gerado não vai para o git.

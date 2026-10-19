@@ -116,18 +116,28 @@ public class ServerManager {
 
         preflight(env, s, secrets);
 
-        String exe = s.getCommandPath() == null ? "" : s.getCommandPath().trim();
-        if (exe.isEmpty()) {
-            throw new McpException("O caminho do servidor MCP não está configurado. Ajuste em Configurações.");
-        }
-        try {
-            Path exePath = Paths.get(exe);
-            if (exePath.isAbsolute() && !Files.isRegularFile(exePath)) {
-                throw new McpException("Executável não encontrado:\n" + exe
-                        + "\n\nConfira com \"where mcp-abap-adt\" no prompt e ajuste em Configurações.");
+        RuntimeInfo runtime = null;
+        if (s.isEmbeddedServer()) {
+            runtime = EmbeddedRuntime.find();
+            if (runtime == null) {
+                throw new McpException("O servidor embutido não está disponível nesta instalação "
+                        + "(ele é distribuído só para Windows x64).\n\n"
+                        + "Em Configurações, escolha \"Executável instalado na máquina\" e informe o mcp-abap-adt instalado via npm.");
             }
-        } catch (InvalidPathException e) {
-            throw new McpException("Caminho do servidor MCP inválido: " + exe);
+        } else {
+            String exe = s.getCommandPath() == null ? "" : s.getCommandPath().trim();
+            if (exe.isEmpty()) {
+                throw new McpException("O caminho do servidor MCP não está configurado. Ajuste em Configurações.");
+            }
+            try {
+                Path exePath = Paths.get(exe);
+                if (exePath.isAbsolute() && !Files.isRegularFile(exePath)) {
+                    throw new McpException("Executável não encontrado:\n" + exe
+                            + "\n\nConfira com \"where mcp-abap-adt\" no prompt e ajuste em Configurações.");
+                }
+            } catch (InvalidPathException e) {
+                throw new McpException("Caminho do servidor MCP inválido: " + exe);
+            }
         }
         if (!isPortFree(env.getPort())) {
             throw new McpException("A porta " + env.getPort() + " já está em uso neste computador.\n"
@@ -145,7 +155,7 @@ public class ServerManager {
             }
         }
 
-        List<String> command = CommandLine.build(s, env, envFile);
+        List<String> command = CommandLine.build(s, env, envFile, runtime);
         ProcessBuilder pb = new ProcessBuilder(command);
         pb.redirectErrorStream(true);
         pb.directory(workDir());
@@ -159,6 +169,8 @@ public class ServerManager {
         out.println("Alvo: " + env.targetLabel());
         out.println("Tipo de sistema: " + env.getSystemType().label);
         out.println("Ferramentas: " + (env.exposition().isEmpty() ? "(padrão do servidor)" : env.exposition()));
+        out.println("Servidor: " + (runtime != null ? "embutido – " + runtime.describe()
+                : "externo – " + s.getCommandPath()));
         out.println("Comando: " + String.join(" ", command));
         if (env.getAuthMethod() == AuthMethod.SERVICE_KEY) {
             out.println("Na primeira conexão o servidor abre o navegador para o login no BTP (porta de retorno "

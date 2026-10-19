@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: MCP ABAP ADT Launcher - servidor embutido (Windows x64)
+Bundle-SymbolicName: com.brainconsulting.adt.mcp.runtime.win32.x86_64
+Bundle-Version: 1.2.0.qualifier
+Bundle-Vendor: Brain Consulting
+Fragment-Host: com.brainconsulting.adt.mcp
+Eclipse-PlatformFilter: (& (osgi.os=win32) (osgi.arch=x86_64))
+Eclipse-BundleShape: dir
+Bundle-RequiredExecutionEnvironment: JavaSE-17

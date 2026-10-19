@@ -90,15 +90,26 @@ public final class CommandLine {
     }
 
     public static List<String> build(Settings s, Environment env, Path generatedEnvFile) {
+        return build(s, env, generatedEnvFile, null);
+    }
+
+    /** @param runtime servidor embutido a usar; null = executável configurado em Settings. */
+    public static List<String> build(Settings s, Environment env, Path generatedEnvFile, RuntimeInfo runtime) {
         List<String> cmd = new ArrayList<>();
-        String exe = s.getCommandPath() == null ? "" : s.getCommandPath().trim();
-        String lower = exe.toLowerCase(Locale.ROOT);
-        boolean windows = System.getProperty("os.name", "").toLowerCase(Locale.ROOT).startsWith("windows");
-        if (windows && (lower.endsWith(".cmd") || lower.endsWith(".bat"))) {
-            cmd.add("cmd.exe");
-            cmd.add("/c");
+        if (runtime != null) {
+            // Node.js embutido executando o script do servidor: sem cmd.exe nem npm.
+            cmd.add(runtime.node.toString());
+            cmd.add(runtime.entry.toString());
+        } else {
+            String exe = s.getCommandPath() == null ? "" : s.getCommandPath().trim();
+            String lower = exe.toLowerCase(Locale.ROOT);
+            boolean windows = System.getProperty("os.name", "").toLowerCase(Locale.ROOT).startsWith("windows");
+            if (windows && (lower.endsWith(".cmd") || lower.endsWith(".bat"))) {
+                cmd.add("cmd.exe");
+                cmd.add("/c");
+            }
+            cmd.add(exe);
         }
-        cmd.add(exe);
         String args = s.getArgsTemplate() == null ? "" : s.getArgsTemplate()
                 .replace("${port}", String.valueOf(env.getPort()))
                 .replace("${name}", Names.slug(env.getName()));

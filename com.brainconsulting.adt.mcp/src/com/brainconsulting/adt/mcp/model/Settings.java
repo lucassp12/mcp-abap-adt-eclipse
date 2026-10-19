@@ -10,7 +10,9 @@ import com.brainconsulting.adt.mcp.json.MiniJson;
 /** Configurações gerais do plugin (valem para todos os ambientes). */
 public class Settings {
 
-    /** Caminho do executável do servidor MCP. */
+    /** true = usa o Node.js + mcp-abap-adt embutidos no plugin; false = executável instalado na máquina. */
+    private boolean embeddedServer = true;
+    /** Caminho do executável do servidor MCP (só quando embeddedServer = false). */
     private String commandPath = defaultCommandPath();
     /** Argumentos; aceita ${port} e ${name}. */
     private String argsTemplate = "--transport=http --port=${port}";
@@ -50,6 +52,7 @@ public class Settings {
 
     public Settings copy() {
         Settings s = new Settings();
+        s.embeddedServer = embeddedServer;
         s.commandPath = commandPath;
         s.argsTemplate = argsTemplate;
         s.endpointPath = endpointPath;
@@ -63,6 +66,7 @@ public class Settings {
 
     public Map<String, Object> toJson() {
         Map<String, Object> m = new LinkedHashMap<>();
+        m.put("embeddedServer", embeddedServer);
         m.put("commandPath", commandPath);
         m.put("argsTemplate", argsTemplate);
         m.put("endpointPath", endpointPath);
@@ -76,6 +80,7 @@ public class Settings {
 
     public static Settings fromJson(Map<?, ?> m) {
         Settings s = new Settings();
+        s.embeddedServer = MiniJson.asBool(m.get("embeddedServer"), true);
         s.commandPath = MiniJson.asString(m.get("commandPath"), s.commandPath);
         s.argsTemplate = MiniJson.asString(m.get("argsTemplate"), s.argsTemplate);
         s.endpointPath = MiniJson.asString(m.get("endpointPath"), s.endpointPath);
@@ -87,6 +92,8 @@ public class Settings {
         return s;
     }
 
+    public boolean isEmbeddedServer() { return embeddedServer; }
+    public void setEmbeddedServer(boolean embeddedServer) { this.embeddedServer = embeddedServer; }
     public String getCommandPath() { return commandPath; }
     public void setCommandPath(String commandPath) { this.commandPath = commandPath; }
     public String getArgsTemplate() { return argsTemplate; }

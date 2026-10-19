@@ -4,6 +4,23 @@ View no Eclipse para cadastrar ambientes SAP, **on-premise e cloud**, e subir co
 servidor [`mcp-abap-adt` (fr0ster)](https://github.com/fr0ster/mcp-abap-adt) de cada um, com
 **todas as ferramentas** liberadas e já registrado no Claude Code.
 
+## O que mudou na 1.2
+
+- **Servidor embutido:** no Windows x64, o plugin já traz o Node.js e o `mcp-abap-adt`. Não é
+  preciso instalar Node, npm nem o servidor. As versões ficam em `embedded-runtime.properties`
+  (`server.version=auto` usa a mais recente publicada há pelo menos 14 dias) e aparecem em
+  **Configurações** e no Console ao iniciar.
+- A opção "Executável instalado na máquina" continua disponível em **Configurações**, para
+  usar outra versão do servidor ou outra plataforma.
+
+### Licenças do servidor embutido
+
+O `@mcp-abap-adt/core` é distribuído sob **AGPL-3.0**, e várias dependências sob LGPL-3.0.
+O plugin roda o servidor como processo separado, sem modificá-lo, e inclui em
+`runtime/THIRD-PARTY.txt` a lista de licenças e o endereço do código-fonte correspondente.
+Antes de distribuir o update site fora da Brain, valide com o jurídico. Para uso interno,
+mantenha o site em local de acesso restrito (VPS com acesso controlado ou rede interna).
+
 ## O que mudou na 1.1
 
 - **Grupos de ferramentas por ambiente:** `readonly` + `high` (padrão) ou `readonly` + `low`.
@@ -67,7 +84,8 @@ usá-la, aponte o executável para ele em **Configurações**.
 ## Requisitos
 
 - Eclipse 2024-03 ou mais novo, Java 17+.
-- `npm install -g @mcp-abap-adt/core` (padrão: `%APPDATA%\npm\mcp-abap-adt.cmd`).
+- Windows x64: nada além do plugin (Node.js e servidor embutidos).
+- Outras plataformas, ou para usar outra versão do servidor: `npm install -g @mcp-abap-adt/core`.
 - Para compilar o plugin: JDK 17+ e Maven 3.9+.
 
 ## Compilar e instalar

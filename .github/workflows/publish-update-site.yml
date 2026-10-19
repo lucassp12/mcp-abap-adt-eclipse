@@ -1,5 +1,11 @@
-# Compila o plugin com Tycho e publica o update site p2 no GitHub Pages.
-# Ative em: Settings → Pages → Build and deployment → Source: GitHub Actions.
+# Compila o plugin (com o servidor embutido para Windows x64) e publica o update site p2.
+#
+# Destino da publicação (Settings → Secrets and variables → Actions → Variables):
+#   DEPLOY_TARGET ausente ou diferente de "vps"  → GitHub Pages
+#   DEPLOY_TARGET = vps                          → VPS via SSH/rsync (veja DEPLOY-VPS.md)
+#
+# Secrets usados só no destino VPS:
+#   VPS_HOST, VPS_PORT, VPS_USER, VPS_PATH, VPS_SSH_KEY, VPS_KNOWN_HOSTS
 name: Publicar update site
 
 on:
@@ -9,12 +15,10 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: publish-update-site
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -28,8 +32,15 @@ jobs:
           java-version: '21'
           cache: maven
 
+      # Node.js usado só no build, para instalar o servidor embutido.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+
+      - name: Preparar servidor embutido (Node.js + mcp-abap-adt para Windows x64)
+        run: bash .github/scripts/prepare-runtime.sh
+
       # O Maven pré-instalado no runner é mais novo e não carrega o Tycho 4.0.8.
-      # Fixamos uma versão compatível.
       - name: Maven 3.9.9 (compatível com o Tycho 4.0.8)
         run: |
           curl -fsSL https://archive.apache.org/dist/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz | tar xz -C "$RUNNER_TEMP"
@@ -45,16 +56,74 @@ jobs:
           cp .github/site/index.html com.brainconsulting.adt.mcp.site/target/repository/index.html
           touch com.brainconsulting.adt.mcp.site/target/repository/.nojekyll
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
+          name: update-site
           path: com.brainconsulting.adt.mcp.site/target/repository
+          include-hidden-files: true
+          retention-days: 7
 
-  deploy:
+  deploy-pages:
     needs: build
+    if: vars.DEPLOY_TARGET != 'vps'
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: update-site
+          path: site
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  deploy-vps:
+    needs: build
+    if: vars.DEPLOY_TARGET == 'vps'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: update-site
+          path: site
+
+      - name: Configurar SSH
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      # Cada publicação vai para releases/<data>-<commit>; o link "current" só é trocado
+      # no fim, de forma atômica. Mantém as 5 últimas publicações.
+      - name: Publicar na VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PATH: ${{ secrets.VPS_PATH }}
+        run: |
+          PORT="${VPS_PORT:-22}"
+          RELEASE="$VPS_PATH/releases/$(date -u +%Y%m%d%H%M%S)-${GITHUB_SHA::7}"
+          SSH="ssh -i $HOME/.ssh/deploy_key -p $PORT -o BatchMode=yes"
+          $SSH "$VPS_USER@$VPS_HOST" "mkdir -p '$VPS_PATH/releases'"
+          rsync -az --delete --exclude .nojekyll -e "$SSH" site/ "$VPS_USER@$VPS_HOST:$RELEASE/"
+          $SSH "$VPS_USER@$VPS_HOST" "ln -sfn '$RELEASE' '$VPS_PATH/current.tmp' && mv -T '$VPS_PATH/current.tmp' '$VPS_PATH/current' && ls -1dt '$VPS_PATH'/releases/* | tail -n +6 | xargs -r rm -rf"
+          echo "Publicado em $RELEASE"
+
+      - name: Limpar chave SSH
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

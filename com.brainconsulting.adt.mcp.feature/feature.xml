@@ -2,7 +2,7 @@
 <feature
       id="com.brainconsulting.adt.mcp.feature"
       label="MCP ABAP ADT Launcher"
-      version="1.1.0.qualifier"
+      version="1.2.0.qualifier"
       provider-name="Brain Consulting">
 
    <description>
@@ -17,5 +17,13 @@
 
    <plugin
          id="com.brainconsulting.adt.mcp"
+         version="0.0.0"/>
+
+   <!-- Node.js portátil + servidor mcp-abap-adt, instalado só no Windows x64 -->
+   <plugin
+         id="com.brainconsulting.adt.mcp.runtime.win32.x86_64"
+         os="win32"
+         arch="x86_64"
+         fragment="true"
          version="0.0.0"/>
 </feature>

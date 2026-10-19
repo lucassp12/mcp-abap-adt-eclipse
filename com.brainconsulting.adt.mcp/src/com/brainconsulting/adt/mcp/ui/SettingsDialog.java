@@ -15,12 +15,17 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
 import com.brainconsulting.adt.mcp.model.Settings;
+import com.brainconsulting.adt.mcp.server.EmbeddedRuntime;
+import com.brainconsulting.adt.mcp.server.RuntimeInfo;
 
 /** Configurações gerais: servidor MCP, argumentos e integração com o Claude Code. */
 public class SettingsDialog extends TitleAreaDialog {
 
     private final Settings settings;
 
+    private Button embeddedRadio;
+    private Button externalRadio;
+    private Button commandBrowse;
     private Text commandText;
     private Text argsText;
     private Text endpointText;
@@ -55,8 +60,30 @@ public class SettingsDialog extends TitleAreaDialog {
         layout.marginHeight = 10;
         c.setLayout(layout);
 
-        commandText = field(c, "Servidor MCP (executável):", settings.getCommandPath());
-        browse(c, commandText, new String[] { "*.cmd;*.bat;*.exe", "*.*" });
+        RuntimeInfo runtime = EmbeddedRuntime.find();
+        new Label(c, SWT.NONE).setText("Servidor MCP:");
+        embeddedRadio = new Button(c, SWT.RADIO);
+        embeddedRadio.setText("Embutido no plugin (recomendado, não precisa de Node.js nem npm)");
+        embeddedRadio.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+        new Label(c, SWT.NONE);
+        Label runtimeLabel = new Label(c, SWT.WRAP);
+        runtimeLabel.setText(runtime != null
+                ? "Incluído nesta instalação: " + runtime.describe()
+                : "Não disponível nesta instalação (o servidor embutido é distribuído só para Windows x64).");
+        GridData rl = new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1);
+        rl.widthHint = 360;
+        runtimeLabel.setLayoutData(rl);
+        new Label(c, SWT.NONE);
+        externalRadio = new Button(c, SWT.RADIO);
+        externalRadio.setText("Executável instalado na máquina (npm install -g @mcp-abap-adt/core)");
+        externalRadio.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+        boolean embedded = settings.isEmbeddedServer() && runtime != null;
+        embeddedRadio.setSelection(embedded);
+        embeddedRadio.setEnabled(runtime != null);
+        externalRadio.setSelection(!embedded);
+
+        commandText = field(c, "Executável:", settings.getCommandPath());
+        commandBrowse = browse(c, commandText, new String[] { "*.cmd;*.bat;*.exe", "*.*" });
 
         argsText = field(c, "Argumentos base:", settings.getArgsTemplate());
         filler(c);
@@ -87,6 +114,8 @@ public class SettingsDialog extends TitleAreaDialog {
         browse(c, claudeText, new String[] { "*.json", "*.*" });
 
         registerButton.addListener(SWT.Selection, e -> updateEnablement());
+        embeddedRadio.addListener(SWT.Selection, e -> updateEnablement());
+        externalRadio.addListener(SWT.Selection, e -> updateEnablement());
         for (Text t : new Text[] { commandText, argsText, endpointText, prefixText, claudeText, serviceKeysText }) {
             t.addModifyListener(e -> validate());
         }
@@ -104,7 +133,7 @@ public class SettingsDialog extends TitleAreaDialog {
         return t;
     }
 
-    private void browse(Composite c, Text target, String[] filters) {
+    private Button browse(Composite c, Text target, String[] filters) {
         Button b = new Button(c, SWT.PUSH);
         b.setText("Procurar...");
         b.addListener(SWT.Selection, e -> {
@@ -116,6 +145,7 @@ public class SettingsDialog extends TitleAreaDialog {
                 target.setText(path);
             }
         });
+        return b;
     }
 
     private void browseDir(Composite c, Text target) {
@@ -145,6 +175,9 @@ public class SettingsDialog extends TitleAreaDialog {
     }
 
     private void updateEnablement() {
+        boolean external = externalRadio.getSelection();
+        commandText.setEnabled(external);
+        commandBrowse.setEnabled(external);
         boolean reg = registerButton.getSelection();
         removeOnStopButton.setEnabled(reg);
         claudeText.setEnabled(reg);
@@ -157,7 +190,7 @@ public class SettingsDialog extends TitleAreaDialog {
             return;
         }
         String err = null;
-        if (commandText.getText().trim().isEmpty()) {
+        if (externalRadio.getSelection() && commandText.getText().trim().isEmpty()) {
             err = "Informe o executável do servidor MCP.";
         } else if (!argsText.getText().contains("${port}")) {
             err = "Os argumentos precisam conter ${port}, senão todos os ambientes usariam a mesma porta.";
@@ -175,6 +208,7 @@ public class SettingsDialog extends TitleAreaDialog {
 
     @Override
     protected void okPressed() {
+        settings.setEmbeddedServer(embeddedRadio.getSelection());
         settings.setCommandPath(commandText.getText().trim());
         settings.setArgsTemplate(argsText.getText().trim());
         settings.setEndpointPath(endpointText.getText().trim());
