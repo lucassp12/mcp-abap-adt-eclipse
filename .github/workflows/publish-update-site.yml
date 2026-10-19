@@ -24,11 +24,19 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: "21"
           cache: maven
 
+      # O Maven pré-instalado no runner é mais novo e não carrega o Tycho 4.0.8.
+      - name: Maven 3.9.9 (compatível com o Tycho 4.0.8)
+        run: |
+          curl -fsSL https://archive.apache.org/dist/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz | tar xz -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/apache-maven-3.9.9/bin" >> "$GITHUB_PATH"
+
       - name: Build do plugin e do update site (Tycho)
-        run: mvn -B clean verify
+        run: |
+          mvn -v
+          mvn -B clean verify
 
       - name: Página inicial e .nojekyll
         run: |
