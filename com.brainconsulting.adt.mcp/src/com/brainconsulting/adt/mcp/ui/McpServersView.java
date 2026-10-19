@@ -400,10 +400,14 @@ public class McpServersView extends ViewPart implements ServerManager.Listener {
         Job job = new Job("Abrindo o Claude Code") {
             @Override
             protected IStatus run(IProgressMonitor monitor) {
-                if (!ClaudeLauncher.isClaudeInstalled()) {
+                java.nio.file.Path claude = ClaudeLauncher.resolveClaude(store().getSettings().getClaudePath());
+                if (claude == null) {
                     asyncError(shell, "Claude Code não encontrado",
-                            "O comando \"claude\" não foi encontrado no PATH.\n\n"
-                            + "Instale o Claude Code e abra o Eclipse de novo:\n" + ClaudeLauncher.INSTALL_URL);
+                            "O plugin não encontrou o executável do Claude Code (claude.exe ou claude.cmd).\n\n"
+                            + "Se ele está instalado, descubra o caminho rodando no PowerShell:\n"
+                            + "    where.exe claude\n"
+                            + "e informe-o em Configurações → Executável do claude.\n\n"
+                            + "Se não está instalado: " + ClaudeLauncher.INSTALL_URL);
                     return Status.OK_STATUS;
                 }
                 boolean ready = env == null || ClaudeLauncher.waitForPort(env.getPort(), 20_000);
@@ -411,7 +415,7 @@ public class McpServersView extends ViewPart implements ServerManager.Listener {
                 if (display.isDisposed()) {
                     return Status.OK_STATUS;
                 }
-                display.asyncExec(() -> launchClaude(shell, env, ready));
+                display.asyncExec(() -> launchClaude(shell, env, claude, ready));
                 return Status.OK_STATUS;
             }
         };
@@ -419,13 +423,13 @@ public class McpServersView extends ViewPart implements ServerManager.Listener {
         job.schedule();
     }
 
-    private void launchClaude(Shell shell, Environment env, boolean serverReady) {
+    private void launchClaude(Shell shell, Environment env, java.nio.file.Path claude, boolean serverReady) {
         java.nio.file.Path dir = ClaudeLauncher.workDir(env == null ? null : env.getWorkDir());
         String title = env == null ? "Claude Code" : "Claude Code – " + env.getName();
         String args = store().getSettings().getClaudeArgs();
         boolean opened = false;
         if (store().getSettings().isClaudeInternalTerminal()) {
-            String[] proc = ClaudeLauncher.internalProcess(args);
+            String[] proc = ClaudeLauncher.internalProcess(claude, args);
             opened = EclipseTerminal.open(title, dir, proc[0], proc[1]);
             if (!opened) {
                 MessageDialog.openInformation(shell, "Terminal do Eclipse indisponível",
@@ -435,7 +439,7 @@ public class McpServersView extends ViewPart implements ServerManager.Listener {
         }
         if (!opened) {
             try {
-                ClaudeLauncher.launchExternal(dir, title, args);
+                ClaudeLauncher.launchExternal(dir, title, claude, args);
             } catch (Exception ex) {
                 MessageDialog.openError(shell, "Não foi possível abrir o terminal", ex.getMessage());
                 return;

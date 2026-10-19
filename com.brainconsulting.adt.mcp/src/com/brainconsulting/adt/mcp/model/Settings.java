@@ -27,6 +27,8 @@ public class Settings {
     private String claudeTerminal = "external";
     /** Argumentos extras do comando claude (ex.: --continue). */
     private String claudeArgs = "";
+    /** Caminho do executável do claude; vazio = localizar automaticamente. */
+    private String claudePath = "";
     /** Pasta onde o auth-broker do mcp-abap-adt procura as service keys (destinos). */
     private String serviceKeysDir = ServiceKeys.defaultDir().toString();
 
@@ -67,6 +69,7 @@ public class Settings {
         s.serviceKeysDir = serviceKeysDir;
         s.claudeTerminal = claudeTerminal;
         s.claudeArgs = claudeArgs;
+        s.claudePath = claudePath;
         return s;
     }
 
@@ -83,6 +86,7 @@ public class Settings {
         m.put("serviceKeysDir", serviceKeysDir);
         m.put("claudeTerminal", claudeTerminal);
         m.put("claudeArgs", claudeArgs);
+        m.put("claudePath", claudePath);
         return m;
     }
 
@@ -99,6 +103,7 @@ public class Settings {
         s.serviceKeysDir = MiniJson.asString(m.get("serviceKeysDir"), s.serviceKeysDir);
         s.claudeTerminal = MiniJson.asString(m.get("claudeTerminal"), s.claudeTerminal);
         s.claudeArgs = MiniJson.asString(m.get("claudeArgs"), s.claudeArgs);
+        s.claudePath = MiniJson.asString(m.get("claudePath"), s.claudePath);
         return s;
     }
 
@@ -120,6 +125,8 @@ public class Settings {
     public void setClaudeConfigPath(String claudeConfigPath) { this.claudeConfigPath = claudeConfigPath; }
     public boolean isClaudeInternalTerminal() { return "internal".equals(claudeTerminal); }
     public void setClaudeInternalTerminal(boolean internal) { claudeTerminal = internal ? "internal" : "external"; }
+    public String getClaudePath() { return claudePath; }
+    public void setClaudePath(String claudePath) { this.claudePath = claudePath; }
     public String getClaudeArgs() { return claudeArgs; }
     public void setClaudeArgs(String claudeArgs) { this.claudeArgs = claudeArgs; }
     public String getServiceKeysDir() { return serviceKeysDir; }

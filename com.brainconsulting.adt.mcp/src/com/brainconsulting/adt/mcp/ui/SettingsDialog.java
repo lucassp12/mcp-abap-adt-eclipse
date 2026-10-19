@@ -35,6 +35,7 @@ public class SettingsDialog extends TitleAreaDialog {
     private Button externalTerminalRadio;
     private Button internalTerminalRadio;
     private Text claudeArgsText;
+    private Text claudePathText;
     private Button registerButton;
     private Button removeOnStopButton;
 
@@ -113,6 +114,11 @@ public class SettingsDialog extends TitleAreaDialog {
         internalTerminalRadio.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
         internalTerminalRadio.setSelection(settings.isClaudeInternalTerminal());
         externalTerminalRadio.setSelection(!settings.isClaudeInternalTerminal());
+        claudePathText = field(c, "Executável do claude:", settings.getClaudePath());
+        claudePathText.setMessage("vazio = localizar automaticamente");
+        browse(c, claudePathText, new String[] { "*.exe;*.cmd;*.bat", "*.*" });
+        note(c, "Só é preciso preencher se o plugin não encontrar o Claude Code. Para descobrir o caminho, "
+                + "rode where.exe claude no PowerShell.");
         claudeArgsText = field(c, "Argumentos do claude:", settings.getClaudeArgs());
         filler(c);
         note(c, "Opcional. Ex.: --continue para retomar a última conversa da pasta.");
@@ -236,6 +242,7 @@ public class SettingsDialog extends TitleAreaDialog {
         settings.setServiceKeysDir(serviceKeysText.getText().trim());
         settings.setClaudeInternalTerminal(internalTerminalRadio.getSelection());
         settings.setClaudeArgs(claudeArgsText.getText().trim());
+        settings.setClaudePath(claudePathText.getText().trim());
         super.okPressed();
     }
 

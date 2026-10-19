@@ -4,6 +4,15 @@ View no Eclipse para cadastrar ambientes SAP, **on-premise e cloud**, e subir co
 servidor [`mcp-abap-adt` (fr0ster)](https://github.com/fr0ster/mcp-abap-adt) de cada um, com
 **todas as ferramentas** liberadas e já registrado no Claude Code.
 
+## O que mudou na 1.3.1
+
+- O botão **>_ Abrir Claude Code** encontra o `claude` mesmo quando o Eclipse foi aberto antes da
+  instalação do Claude Code. O plugin procura no PATH do Eclipse, no PATH atual do Windows (lido
+  do registro) e nas pastas padrão (`%USERPROFILE%\.local\bin`, `%APPDATA%\npm`). O terminal
+  aberto também recebe o PATH atualizado.
+- Novo campo opcional **Executável do claude** em Configurações, para os casos em que o Claude
+  Code está numa pasta fora do padrão.
+
 ## O que mudou na 1.3
 
 - **Botão ">_ Abrir Claude Code"** na view: com um ambiente selecionado, inicia o servidor dele

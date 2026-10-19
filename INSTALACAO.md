@@ -80,7 +80,7 @@ mvn clean verify
 O update site sai em:
 
 ```
-com.brainconsulting.adt.mcp.site\target\com.brainconsulting.adt.mcp.site-1.3.0-SNAPSHOT.zip
+com.brainconsulting.adt.mcp.site\target\com.brainconsulting.adt.mcp.site-1.3.1-SNAPSHOT.zip
 ```
 
 O primeiro build demora alguns minutos, porque baixa as dependências do Eclipse.
