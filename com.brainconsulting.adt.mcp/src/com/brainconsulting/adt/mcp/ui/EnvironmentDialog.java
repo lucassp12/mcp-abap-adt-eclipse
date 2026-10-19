@@ -97,6 +97,8 @@ public class EnvironmentDialog extends TitleAreaDialog {
     private Button readonlyButton;
     private Button highButton;
     private Button lowButton;
+    // Claude Code
+    private Text workDirText;
     // avançado
     private Text extraArgsText;
     private Text extraEnvText;
@@ -156,6 +158,10 @@ public class EnvironmentDialog extends TitleAreaDialog {
         TabItem t2 = new TabItem(tabs, SWT.NONE);
         t2.setText("Ferramentas");
         t2.setControl(createToolsPage(tabs));
+
+        TabItem tc = new TabItem(tabs, SWT.NONE);
+        tc.setText("Claude Code");
+        tc.setControl(createClaudePage(tabs));
 
         TabItem t3 = new TabItem(tabs, SWT.NONE);
         t3.setText("Avançado");
@@ -326,6 +332,31 @@ public class EnvironmentDialog extends TitleAreaDialog {
         return c;
     }
 
+    private Composite createClaudePage(Composite parent) {
+        Composite c = page(parent, 3);
+        new Label(c, SWT.NONE).setText("Pasta de trabalho:");
+        workDirText = new Text(c, SWT.BORDER | SWT.SINGLE);
+        GridData gd = new GridData(SWT.FILL, SWT.CENTER, true, false);
+        gd.widthHint = 300;
+        workDirText.setLayoutData(gd);
+        workDirText.setText(env.getWorkDir() == null ? "" : env.getWorkDir());
+        workDirText.setMessage("vazio = pasta do usuário");
+        Button b = new Button(c, SWT.PUSH);
+        b.setText("Procurar...");
+        b.addListener(SWT.Selection, e -> {
+            org.eclipse.swt.widgets.DirectoryDialog dd = new org.eclipse.swt.widgets.DirectoryDialog(getShell());
+            dd.setFilterPath(workDirText.getText());
+            String path = dd.open();
+            if (path != null) {
+                workDirText.setText(path);
+            }
+        });
+        note(c, "Pasta onde o Claude Code abre quando você usa \">_ Abrir Claude Code\" com este ambiente "
+                + "selecionado. Use, por exemplo, a pasta do projeto do cliente com as especificações: o Claude "
+                + "lê os arquivos e o CLAUDE.md de lá.");
+        return c;
+    }
+
     private Composite createAdvancedPage(Composite parent) {
         Composite c = page(parent, 2);
         extraArgsText = field(c, "Argumentos extras:", env.getExtraArgs(), "ex.: --auth-broker-path=C:\\chaves");
@@ -414,7 +445,7 @@ public class EnvironmentDialog extends TitleAreaDialog {
     private void hookValidation() {
         for (Text t : new Text[] { nameText, portText, urlText, clientText, languageText, userText, passwordText,
                 certPathText, certKeyText, pfxPathText, passphraseText, spnText, destinationText, browserPortText,
-                envFileText, extraArgsText, extraEnvText }) {
+                envFileText, workDirText, extraArgsText, extraEnvText }) {
             t.addModifyListener(e -> validate());
         }
         for (Button b : new Button[] { readonlyButton, highButton, lowButton }) {
@@ -516,6 +547,16 @@ public class EnvironmentDialog extends TitleAreaDialog {
         if (highButton.getSelection() && lowButton.getSelection()) {
             return "Alto nível e baixo nível são exclusivos no mcp-abap-adt: escolha um deles (aba Ferramentas).";
         }
+        String wd = workDirText.getText().trim();
+        if (!wd.isEmpty()) {
+            try {
+                if (!Files.isDirectory(Paths.get(wd))) {
+                    return "A pasta de trabalho do Claude Code não existe (aba Claude Code).";
+                }
+            } catch (RuntimeException e) {
+                return "Pasta de trabalho inválida (aba Claude Code).";
+            }
+        }
         String bad = CommandLine.invalidEnvLine(extraEnvText.getText());
         if (bad != null) {
             return "Variável extra inválida (aba Avançado): \"" + bad.trim() + "\". Use CHAVE=valor.";
@@ -586,6 +627,7 @@ public class EnvironmentDialog extends TitleAreaDialog {
         env.setExposeReadonly(readonlyButton.getSelection());
         env.setExposeHigh(highButton.getSelection());
         env.setExposeLow(lowButton.getSelection());
+        env.setWorkDir(workDirText.getText().trim());
         env.setExtraArgs(extraArgsText.getText().trim());
         env.setExtraEnv(extraEnvText.getText());
 

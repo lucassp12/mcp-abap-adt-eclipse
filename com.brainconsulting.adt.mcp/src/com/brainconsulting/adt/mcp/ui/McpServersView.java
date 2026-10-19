@@ -36,6 +36,7 @@ import org.eclipse.ui.part.ViewPart;
 import com.brainconsulting.adt.mcp.Activator;
 import com.brainconsulting.adt.mcp.model.Environment;
 import com.brainconsulting.adt.mcp.model.EnvironmentStore;
+import com.brainconsulting.adt.mcp.server.ClaudeLauncher;
 import com.brainconsulting.adt.mcp.server.ConnectionTester;
 import com.brainconsulting.adt.mcp.server.McpException;
 import com.brainconsulting.adt.mcp.server.ServerManager;
@@ -57,6 +58,7 @@ public class McpServersView extends ViewPart implements ServerManager.Listener {
     private Action stopAction;
     private Action testAction;
     private Action settingsAction;
+    private Action claudeAction;
 
     private EnvironmentStore store() {
         return Activator.getDefault().getStore();
@@ -193,6 +195,14 @@ public class McpServersView extends ViewPart implements ServerManager.Listener {
         };
         testAction.setToolTipText("Testa rede, porta, protocolo e credenciais do ambiente e explica o resultado");
 
+        claudeAction = new Action(">_ Abrir Claude Code") {
+            @Override
+            public void run() {
+                openClaudeCode();
+            }
+        };
+        claudeAction.setToolTipText("Inicia o servidor do ambiente (se preciso) e abre o Claude Code na pasta de trabalho dele");
+
         settingsAction = new Action("Configurações...") {
             @Override
             public void run() {
@@ -204,6 +214,8 @@ public class McpServersView extends ViewPart implements ServerManager.Listener {
 
     private void contributeToActionBars() {
         IToolBarManager tb = getViewSite().getActionBars().getToolBarManager();
+        tb.add(claudeAction);
+        tb.add(new Separator());
         tb.add(startAction);
         tb.add(stopAction);
         tb.add(new Separator());
@@ -219,6 +231,8 @@ public class McpServersView extends ViewPart implements ServerManager.Listener {
 
     private void hookContextMenu() {
         MenuManager mm = new MenuManager();
+        mm.add(claudeAction);
+        mm.add(new Separator());
         mm.add(startAction);
         mm.add(stopAction);
         mm.add(new Separator());
@@ -242,6 +256,7 @@ public class McpServersView extends ViewPart implements ServerManager.Listener {
         startAction.setEnabled(sel && !run);
         stopAction.setEnabled(run);
         testAction.setEnabled(sel);
+        claudeAction.setEnabled(true);
     }
 
     private Environment selected() {
@@ -363,6 +378,86 @@ public class McpServersView extends ViewPart implements ServerManager.Listener {
         };
         job.setUser(true);
         job.schedule();
+    }
+
+    /**
+     * Garante o servidor do ambiente selecionado (inicia se preciso, espera a porta abrir) e então
+     * abre o Claude Code. Sem ambiente selecionado, abre o Claude Code na pasta do usuário.
+     */
+    private void openClaudeCode() {
+        Environment e = selected();
+        Shell shell = shell();
+        if (e != null && !servers().isRunning(e.getId())) {
+            try {
+                servers().start(e);
+            } catch (McpException ex) {
+                MessageDialog.openError(shell, "Não foi possível iniciar \"" + e.getName() + "\"", ex.getMessage());
+                return;
+            }
+            refresh();
+        }
+        Environment env = e == null ? null : e.copy();
+        Job job = new Job("Abrindo o Claude Code") {
+            @Override
+            protected IStatus run(IProgressMonitor monitor) {
+                if (!ClaudeLauncher.isClaudeInstalled()) {
+                    asyncError(shell, "Claude Code não encontrado",
+                            "O comando \"claude\" não foi encontrado no PATH.\n\n"
+                            + "Instale o Claude Code e abra o Eclipse de novo:\n" + ClaudeLauncher.INSTALL_URL);
+                    return Status.OK_STATUS;
+                }
+                boolean ready = env == null || ClaudeLauncher.waitForPort(env.getPort(), 20_000);
+                Display display = shell.getDisplay();
+                if (display.isDisposed()) {
+                    return Status.OK_STATUS;
+                }
+                display.asyncExec(() -> launchClaude(shell, env, ready));
+                return Status.OK_STATUS;
+            }
+        };
+        job.setUser(true);
+        job.schedule();
+    }
+
+    private void launchClaude(Shell shell, Environment env, boolean serverReady) {
+        java.nio.file.Path dir = ClaudeLauncher.workDir(env == null ? null : env.getWorkDir());
+        String title = env == null ? "Claude Code" : "Claude Code – " + env.getName();
+        String args = store().getSettings().getClaudeArgs();
+        boolean opened = false;
+        if (store().getSettings().isClaudeInternalTerminal()) {
+            String[] proc = ClaudeLauncher.internalProcess(args);
+            opened = EclipseTerminal.open(title, dir, proc[0], proc[1]);
+            if (!opened) {
+                MessageDialog.openInformation(shell, "Terminal do Eclipse indisponível",
+                        "A view Terminal não está disponível nesta instalação do Eclipse.\n"
+                        + "O Claude Code será aberto numa janela externa.");
+            }
+        }
+        if (!opened) {
+            try {
+                ClaudeLauncher.launchExternal(dir, title, args);
+            } catch (Exception ex) {
+                MessageDialog.openError(shell, "Não foi possível abrir o terminal", ex.getMessage());
+                return;
+            }
+        }
+        if (!serverReady) {
+            MessageDialog.openWarning(shell, "Servidor ainda não respondeu",
+                    "O servidor MCP de \"" + env.getName() + "\" ainda não respondia na porta " + env.getPort()
+                    + " quando o Claude Code abriu.\nSe o /mcp mostrar o servidor com falha, confira o Console "
+                    + "e use /mcp para reconectar.");
+        }
+    }
+
+    private static void asyncError(Shell shell, String title, String message) {
+        Display display = shell.getDisplay();
+        if (!display.isDisposed()) {
+            display.asyncExec(() -> {
+                if (!shell.isDisposed()) {
+                    MessageDialog.openError(shell, title, message);
+                }
+            });
+        }
     }
 
     private void openSettings() {

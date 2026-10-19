@@ -23,6 +23,10 @@ public class Settings {
     private boolean registerInClaude = true;
     private boolean removeOnStop = true;
     private String claudeConfigPath = Paths.get(System.getProperty("user.home"), ".claude.json").toString();
+    /** Onde abrir o Claude Code: "external" (Windows Terminal/console) ou "internal" (view Terminal do Eclipse). */
+    private String claudeTerminal = "external";
+    /** Argumentos extras do comando claude (ex.: --continue). */
+    private String claudeArgs = "";
     /** Pasta onde o auth-broker do mcp-abap-adt procura as service keys (destinos). */
     private String serviceKeysDir = ServiceKeys.defaultDir().toString();
 
@@ -61,6 +65,8 @@ public class Settings {
         s.removeOnStop = removeOnStop;
         s.claudeConfigPath = claudeConfigPath;
         s.serviceKeysDir = serviceKeysDir;
+        s.claudeTerminal = claudeTerminal;
+        s.claudeArgs = claudeArgs;
         return s;
     }
 
@@ -75,6 +81,8 @@ public class Settings {
         m.put("removeOnStop", removeOnStop);
         m.put("claudeConfigPath", claudeConfigPath);
         m.put("serviceKeysDir", serviceKeysDir);
+        m.put("claudeTerminal", claudeTerminal);
+        m.put("claudeArgs", claudeArgs);
         return m;
     }
 
@@ -89,6 +97,8 @@ public class Settings {
         s.removeOnStop = MiniJson.asBool(m.get("removeOnStop"), s.removeOnStop);
         s.claudeConfigPath = MiniJson.asString(m.get("claudeConfigPath"), s.claudeConfigPath);
         s.serviceKeysDir = MiniJson.asString(m.get("serviceKeysDir"), s.serviceKeysDir);
+        s.claudeTerminal = MiniJson.asString(m.get("claudeTerminal"), s.claudeTerminal);
+        s.claudeArgs = MiniJson.asString(m.get("claudeArgs"), s.claudeArgs);
         return s;
     }
 
@@ -108,6 +118,10 @@ public class Settings {
     public void setRemoveOnStop(boolean removeOnStop) { this.removeOnStop = removeOnStop; }
     public String getClaudeConfigPath() { return claudeConfigPath; }
     public void setClaudeConfigPath(String claudeConfigPath) { this.claudeConfigPath = claudeConfigPath; }
+    public boolean isClaudeInternalTerminal() { return "internal".equals(claudeTerminal); }
+    public void setClaudeInternalTerminal(boolean internal) { claudeTerminal = internal ? "internal" : "external"; }
+    public String getClaudeArgs() { return claudeArgs; }
+    public void setClaudeArgs(String claudeArgs) { this.claudeArgs = claudeArgs; }
     public String getServiceKeysDir() { return serviceKeysDir; }
     public void setServiceKeysDir(String serviceKeysDir) { this.serviceKeysDir = serviceKeysDir; }
 }

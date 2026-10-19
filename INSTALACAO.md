@@ -17,7 +17,7 @@ Claude Code.
 | ABAP Development Tools (ADT) | Instalado e **funcionando** antes do plugin | Abrir um projeto ABAP |
 | Java do Eclipse | 17 ou superior (Eclipse 2025+ já usa 21) | `java -version` |
 | Node.js e mcp-abap-adt | **Não precisa no Windows x64**: vêm embutidos no plugin (1.2+). Em outras plataformas: Node.js LTS + `npm install -g @mcp-abap-adt/core` | Configurações da view |
-| Claude Code | Instalado e logado | `claude --version` |
+| Claude Code | Instalado e logado (necessário também para o botão ">_ Abrir Claude Code") | `claude --version` |
 
 ### 1.2 Só para compilar o plugin
 
@@ -80,7 +80,7 @@ mvn clean verify
 O update site sai em:
 
 ```
-com.brainconsulting.adt.mcp.site\target\com.brainconsulting.adt.mcp.site-1.2.0-SNAPSHOT.zip
+com.brainconsulting.adt.mcp.site\target\com.brainconsulting.adt.mcp.site-1.3.0-SNAPSHOT.zip
 ```
 
 O primeiro build demora alguns minutos, porque baixa as dependências do Eclipse.
@@ -121,6 +121,12 @@ No menu da view (▾), abra **Configurações…** e confira:
 5. Clique em **▶ Iniciar** e acompanhe o log no Console do Eclipse.
 
 ### Passo 7: usar no Claude Code
+
+O jeito mais simples é selecionar o ambiente na view e clicar em **>_ Abrir Claude Code**: o
+plugin inicia o servidor, espera ele responder e abre o Claude Code na pasta de trabalho do
+ambiente (aba **Claude Code** do cadastro).
+
+Para usar uma sessão do Claude Code que você abriu por conta própria:
 
 1. Abra uma **nova sessão** do Claude Code, ou use `/mcp` numa sessão aberta.
 2. Confirme que o servidor (ex.: `sap-arezzo-dev`) aparece conectado em `/mcp`.

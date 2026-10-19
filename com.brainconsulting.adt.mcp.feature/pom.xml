@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.brainconsulting.adt.mcp</groupId>
     <artifactId>parent</artifactId>
-    <version>1.2.0-SNAPSHOT</version>
+    <version>1.3.0-SNAPSHOT</version>
   </parent>
   <artifactId>com.brainconsulting.adt.mcp.feature</artifactId>
   <packaging>eclipse-feature</packaging>

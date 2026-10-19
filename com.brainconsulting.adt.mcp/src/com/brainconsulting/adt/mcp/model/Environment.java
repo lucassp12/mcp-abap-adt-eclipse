@@ -54,6 +54,9 @@ public class Environment {
     private boolean exposeHigh = true;
     private boolean exposeLow = false; // high e low são mutuamente exclusivos no mcp-abap-adt
 
+    // Claude Code
+    private String workDir = "";
+
     // avançado
     private String extraArgs = "";
     private String extraEnv = "";
@@ -113,6 +116,7 @@ public class Environment {
         m.put("exposeReadonly", exposeReadonly);
         m.put("exposeHigh", exposeHigh);
         m.put("exposeLow", exposeLow);
+        m.put("workDir", workDir);
         m.put("extraArgs", extraArgs);
         m.put("extraEnv", extraEnv);
         return m;
@@ -148,6 +152,7 @@ public class Environment {
         if (e.exposeHigh && e.exposeLow) {
             e.exposeLow = false; // combinação recusada pelo servidor
         }
+        e.workDir = MiniJson.asString(m.get("workDir"), "");
         e.extraArgs = MiniJson.asString(m.get("extraArgs"), "");
         e.extraEnv = MiniJson.asString(m.get("extraEnv"), "");
         return e;
@@ -196,6 +201,8 @@ public class Environment {
     public void setExposeHigh(boolean v) { exposeHigh = v; }
     public boolean isExposeLow() { return exposeLow; }
     public void setExposeLow(boolean v) { exposeLow = v; }
+    public String getWorkDir() { return workDir; }
+    public void setWorkDir(String v) { workDir = v; }
     public String getExtraArgs() { return extraArgs; }
     public void setExtraArgs(String v) { extraArgs = v; }
     public String getExtraEnv() { return extraEnv; }

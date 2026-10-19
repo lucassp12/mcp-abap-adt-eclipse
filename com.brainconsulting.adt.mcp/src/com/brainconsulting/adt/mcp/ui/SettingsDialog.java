@@ -32,6 +32,9 @@ public class SettingsDialog extends TitleAreaDialog {
     private Text prefixText;
     private Text claudeText;
     private Text serviceKeysText;
+    private Button externalTerminalRadio;
+    private Button internalTerminalRadio;
+    private Text claudeArgsText;
     private Button registerButton;
     private Button removeOnStopButton;
 
@@ -99,6 +102,20 @@ public class SettingsDialog extends TitleAreaDialog {
 
         prefixText = field(c, "Prefixo do nome no Claude:", settings.getServerPrefix());
         filler(c);
+
+        new Label(c, SWT.NONE).setText("Abrir Claude Code em:");
+        externalTerminalRadio = new Button(c, SWT.RADIO);
+        externalTerminalRadio.setText("Janela do Windows Terminal (recomendado)");
+        externalTerminalRadio.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+        new Label(c, SWT.NONE);
+        internalTerminalRadio = new Button(c, SWT.RADIO);
+        internalTerminalRadio.setText("View Terminal do Eclipse (se indisponível, usa a janela externa)");
+        internalTerminalRadio.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+        internalTerminalRadio.setSelection(settings.isClaudeInternalTerminal());
+        externalTerminalRadio.setSelection(!settings.isClaudeInternalTerminal());
+        claudeArgsText = field(c, "Argumentos do claude:", settings.getClaudeArgs());
+        filler(c);
+        note(c, "Opcional. Ex.: --continue para retomar a última conversa da pasta.");
 
         registerButton = new Button(c, SWT.CHECK);
         registerButton.setText("Registrar automaticamente no Claude Code ao iniciar");
@@ -217,6 +234,8 @@ public class SettingsDialog extends TitleAreaDialog {
         settings.setRemoveOnStop(removeOnStopButton.getSelection());
         settings.setClaudeConfigPath(claudeText.getText().trim());
         settings.setServiceKeysDir(serviceKeysText.getText().trim());
+        settings.setClaudeInternalTerminal(internalTerminalRadio.getSelection());
+        settings.setClaudeArgs(claudeArgsText.getText().trim());
         super.okPressed();
     }
 

@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: MCP ABAP ADT Launcher
 Bundle-SymbolicName: com.brainconsulting.adt.mcp;singleton:=true
-Bundle-Version: 1.2.0.qualifier
+Bundle-Version: 1.3.0.qualifier
 Bundle-Vendor: Brain Consulting
 Bundle-Activator: com.brainconsulting.adt.mcp.Activator
 Bundle-ActivationPolicy: lazy
