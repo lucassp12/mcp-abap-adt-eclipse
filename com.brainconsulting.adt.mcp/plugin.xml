@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension point="org.eclipse.ui.views">
+      <category
+            id="com.brainconsulting.adt.mcp.category"
+            name="Brain Consulting">
+      </category>
+      <view
+            id="com.brainconsulting.adt.mcp.view"
+            name="MCP ABAP ADT"
+            category="com.brainconsulting.adt.mcp.category"
+            class="com.brainconsulting.adt.mcp.ui.McpServersView"
+            restorable="true">
+      </view>
+   </extension>
+</plugin>
