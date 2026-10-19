@@ -25,6 +25,7 @@ public class Activator extends AbstractUIPlugin {
         store = new EnvironmentStore();
         store.load();
         serverManager = new ServerManager(store);
+        ServerManager.cleanRunDir();
         // Garantia extra: se a JVM do Eclipse terminar de forma abrupta, não deixa node.exe órfão.
         shutdownHook = new Thread(serverManager::stopAllQuietly, "mcp-abap-adt-shutdown");
         Runtime.getRuntime().addShutdownHook(shutdownHook);

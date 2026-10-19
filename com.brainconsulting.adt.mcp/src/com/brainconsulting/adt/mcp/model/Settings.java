@@ -13,14 +13,31 @@ public class Settings {
     /** Caminho do executável do servidor MCP. */
     private String commandPath = defaultCommandPath();
     /** Argumentos; aceita ${port} e ${name}. */
-    private String argsTemplate = "--transport=http --port ${port}";
+    private String argsTemplate = "--transport=http --port=${port}";
     /** Caminho do endpoint HTTP exposto pelo servidor (confira no log de inicialização). */
-    private String endpointPath = "/mcp";
+    private String endpointPath = "/mcp/stream/http";
     /** Prefixo do nome do servidor dentro do Claude Code. */
     private String serverPrefix = "sap-";
     private boolean registerInClaude = true;
     private boolean removeOnStop = true;
     private String claudeConfigPath = Paths.get(System.getProperty("user.home"), ".claude.json").toString();
+    /** Pasta onde o auth-broker do mcp-abap-adt procura as service keys (destinos). */
+    private String serviceKeysDir = ServiceKeys.defaultDir().toString();
+
+    /** Corrige padrões da versão 1 do plugin, que estavam errados para o mcp-abap-adt (fr0ster). */
+    public void migrateFromV1() {
+        if ("/mcp".equals(endpointPath)) {
+            endpointPath = "/mcp/stream/http";
+        }
+        if ("--transport=http --port ${port}".equals(argsTemplate)) {
+            argsTemplate = "--transport=http --port=${port}";
+        }
+        if (argsTemplate != null) {
+            // Na 1.1 ferramentas e conexão são definidas por ambiente; --exposition, --env-path,
+            // --env e --mcp deixados nos argumentos gerais duplicariam esses parâmetros.
+            argsTemplate = argsTemplate.replaceAll("\\s*--(exposition|env-path|env|mcp)[= ]\\S+", "").trim();
+        }
+    }
 
     public static String defaultCommandPath() {
         String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
@@ -40,6 +57,7 @@ public class Settings {
         s.registerInClaude = registerInClaude;
         s.removeOnStop = removeOnStop;
         s.claudeConfigPath = claudeConfigPath;
+        s.serviceKeysDir = serviceKeysDir;
         return s;
     }
 
@@ -52,6 +70,7 @@ public class Settings {
         m.put("registerInClaude", registerInClaude);
         m.put("removeOnStop", removeOnStop);
         m.put("claudeConfigPath", claudeConfigPath);
+        m.put("serviceKeysDir", serviceKeysDir);
         return m;
     }
 
@@ -64,6 +83,7 @@ public class Settings {
         s.registerInClaude = MiniJson.asBool(m.get("registerInClaude"), s.registerInClaude);
         s.removeOnStop = MiniJson.asBool(m.get("removeOnStop"), s.removeOnStop);
         s.claudeConfigPath = MiniJson.asString(m.get("claudeConfigPath"), s.claudeConfigPath);
+        s.serviceKeysDir = MiniJson.asString(m.get("serviceKeysDir"), s.serviceKeysDir);
         return s;
     }
 
@@ -81,4 +101,6 @@ public class Settings {
     public void setRemoveOnStop(boolean removeOnStop) { this.removeOnStop = removeOnStop; }
     public String getClaudeConfigPath() { return claudeConfigPath; }
     public void setClaudeConfigPath(String claudeConfigPath) { this.claudeConfigPath = claudeConfigPath; }
+    public String getServiceKeysDir() { return serviceKeysDir; }
+    public void setServiceKeysDir(String serviceKeysDir) { this.serviceKeysDir = serviceKeysDir; }
 }

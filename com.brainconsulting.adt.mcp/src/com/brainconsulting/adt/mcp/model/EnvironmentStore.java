@@ -29,7 +29,6 @@ import com.brainconsulting.adt.mcp.json.MiniJson;
 public class EnvironmentStore {
 
     private static final String SECURE_ROOT = "com.brainconsulting.adt.mcp";
-    private static final String KEY_PASSWORD = "password";
 
     private final Path file = Paths.get(System.getProperty("user.home"), ".brain-mcp-abap", "environments.json");
     private final List<Environment> environments = new ArrayList<>();
@@ -53,6 +52,9 @@ public class EnvironmentStore {
                 if (st instanceof Map) {
                     settings = Settings.fromJson((Map<?, ?>) st);
                 }
+                if (MiniJson.asInt(m.get("version"), 1) < 2) {
+                    settings.migrateFromV1();
+                }
                 Object envs = m.get("environments");
                 if (envs instanceof List) {
                     for (Object o : (List<?>) envs) {
@@ -74,7 +76,7 @@ public class EnvironmentStore {
 
     public synchronized void save() throws IOException {
         Map<String, Object> root = new LinkedHashMap<>();
-        root.put("version", 1);
+        root.put("version", 2);
         root.put("settings", settings.toJson());
         List<Object> list = new ArrayList<>();
         for (Environment e : environments) {
@@ -128,40 +130,56 @@ public class EnvironmentStore {
         this.settings = settings;
     }
 
-    // ------------------------------------------------------------- senhas
+    // ------------------------------------------------------------- segredos
 
-    /** Retorna a senha descriptografada, ou null se não houver. */
-    public String getPassword(String id) {
+    /** Retorna o segredo descriptografado (ex.: "password", "certPassphrase"), ou null se não houver. */
+    public String getSecret(String id, String key) {
         ISecurePreferences node = existingNode(id);
         if (node == null) {
             return null;
         }
         try {
-            return node.get(KEY_PASSWORD, null);
+            return node.get(key, null);
         } catch (StorageException e) {
-            Activator.log("Não foi possível ler a senha do Secure Storage", e);
+            Activator.log("Não foi possível ler um segredo do Secure Storage", e);
             return null;
         }
     }
 
-    /** Verifica se há senha gravada sem precisar descriptografá-la. */
-    public boolean hasPassword(String id) {
+    /** Verifica se o segredo existe sem precisar descriptografá-lo. */
+    public boolean hasSecret(String id, String key) {
         ISecurePreferences node = existingNode(id);
-        return node != null && Arrays.asList(node.keys()).contains(KEY_PASSWORD);
+        return node != null && Arrays.asList(node.keys()).contains(key);
     }
 
-    public void setPassword(String id, String password) throws IOException {
+    public void setSecret(String id, String key, String value) throws IOException {
         ISecurePreferences root = SecurePreferencesFactory.getDefault();
         if (root == null) {
             throw new IOException("O Secure Storage do Eclipse não está disponível.");
         }
         ISecurePreferences node = root.node(SECURE_ROOT + "/" + id);
         try {
-            node.put(KEY_PASSWORD, password, true);
+            node.put(key, value, true);
             node.flush();
         } catch (StorageException e) {
-            throw new IOException("Não foi possível gravar a senha no Secure Storage: " + e.getMessage(), e);
+            throw new IOException("Não foi possível gravar no Secure Storage: " + e.getMessage(), e);
         }
+    }
+
+    /** Todos os segredos de um ambiente, para montar o processo ou o teste de conexão. */
+    public Map<String, String> getSecrets(String id) {
+        Map<String, String> m = new LinkedHashMap<>();
+        ISecurePreferences node = existingNode(id);
+        if (node == null) {
+            return m;
+        }
+        for (String key : node.keys()) {
+            String v = getSecret(id, key);
+            if (v != null) {
+                m.put(key, v);
+            }
+        }
+        return m;
     }
 
     private ISecurePreferences existingNode(String id) {

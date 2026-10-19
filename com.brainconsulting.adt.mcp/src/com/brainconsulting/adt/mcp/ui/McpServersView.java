@@ -1,5 +1,6 @@
 package com.brainconsulting.adt.mcp.ui;
 
+import java.util.Map;
 import java.util.function.Function;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -89,12 +90,13 @@ public class McpServersView extends ViewPart implements ServerManager.Listener {
         });
 
         column("Status", 100, env -> servers().isRunning(env.getId()) ? "● Rodando" : "○ Parado", true);
-        column("Ambiente", 170, Environment::getName, false);
-        column("URL SAP", 260, Environment::getUrl, false);
-        column("Mandante", 75, Environment::getClient, false);
-        column("Usuário", 110, Environment::getUser, false);
-        column("Porta local", 85, env -> String.valueOf(env.getPort()), false);
-        column("Servidor no Claude Code", 190, env -> servers().serverName(env), false);
+        column("Ambiente", 160, Environment::getName, false);
+        column("Sistema", 90, env -> env.getSystemType().shortLabel, false);
+        column("Conexão", 110, env -> env.getAuthMethod().shortLabel, false);
+        column("Alvo", 280, Environment::targetLabel, false);
+        column("Ferramentas", 130, env -> env.exposition(), false);
+        column("Porta local", 80, env -> String.valueOf(env.getPort()), false);
+        column("Servidor no Claude Code", 180, env -> servers().serverName(env), false);
 
         makeActions();
         contributeToActionBars();
@@ -189,7 +191,7 @@ public class McpServersView extends ViewPart implements ServerManager.Listener {
                 testSelected();
             }
         };
-        testAction.setToolTipText("Chama /sap/bc/adt/discovery com os dados do ambiente e explica o resultado");
+        testAction.setToolTipText("Testa rede, porta, protocolo e credenciais do ambiente e explica o resultado");
 
         settingsAction = new Action("Configurações...") {
             @Override
@@ -257,7 +259,7 @@ public class McpServersView extends ViewPart implements ServerManager.Listener {
     // ---------------------------------------------------------------- handlers
 
     private void addEnvironment() {
-        EnvironmentDialog d = new EnvironmentDialog(shell(), null, store(), false);
+        EnvironmentDialog d = new EnvironmentDialog(shell(), null, store());
         if (d.open() != Window.OK) {
             return;
         }
@@ -269,7 +271,7 @@ public class McpServersView extends ViewPart implements ServerManager.Listener {
         if (e == null) {
             return;
         }
-        EnvironmentDialog d = new EnvironmentDialog(shell(), e, store(), store().hasPassword(e.getId()));
+        EnvironmentDialog d = new EnvironmentDialog(shell(), e, store());
         if (d.open() != Window.OK) {
             return;
         }
@@ -280,8 +282,8 @@ public class McpServersView extends ViewPart implements ServerManager.Listener {
         Environment env = d.getEnvironment();
         try {
             store().addOrUpdate(env);
-            if (d.getPassword() != null) {
-                store().setPassword(env.getId(), d.getPassword());
+            for (Map.Entry<String, String> secret : d.getSecrets().entrySet()) {
+                store().setSecret(env.getId(), secret.getKey(), secret.getValue());
             }
             store().save();
         } catch (Exception ex) {
@@ -340,8 +342,8 @@ public class McpServersView extends ViewPart implements ServerManager.Listener {
         Job job = new Job("Testando conexão com " + env.getName()) {
             @Override
             protected IStatus run(IProgressMonitor monitor) {
-                String pw = store().getPassword(env.getId());
-                ConnectionTester.Result r = ConnectionTester.test(env, pw);
+                ConnectionTester.Result r = ConnectionTester.test(env, store().getSecrets(env.getId()),
+                        store().getSettings().getServiceKeysDir());
                 Display display = shell.getDisplay();
                 if (!display.isDisposed()) {
                     display.asyncExec(() -> {

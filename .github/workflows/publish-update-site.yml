@@ -1,4 +1,5 @@
 # Compila o plugin com Tycho e publica o update site p2 no GitHub Pages.
+# Ative em: Settings → Pages → Build and deployment → Source: GitHub Actions.
 name: Publicar update site
 
 on:
@@ -24,10 +25,11 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: '21'
           cache: maven
 
       # O Maven pré-instalado no runner é mais novo e não carrega o Tycho 4.0.8.
+      # Fixamos uma versão compatível.
       - name: Maven 3.9.9 (compatível com o Tycho 4.0.8)
         run: |
           curl -fsSL https://archive.apache.org/dist/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz | tar xz -C "$RUNNER_TEMP"

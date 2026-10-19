@@ -8,6 +8,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
@@ -25,6 +26,7 @@ public class SettingsDialog extends TitleAreaDialog {
     private Text endpointText;
     private Text prefixText;
     private Text claudeText;
+    private Text serviceKeysText;
     private Button registerButton;
     private Button removeOnStopButton;
 
@@ -56,14 +58,17 @@ public class SettingsDialog extends TitleAreaDialog {
         commandText = field(c, "Servidor MCP (executável):", settings.getCommandPath());
         browse(c, commandText, new String[] { "*.cmd;*.bat;*.exe", "*.*" });
 
-        argsText = field(c, "Argumentos:", settings.getArgsTemplate());
+        argsText = field(c, "Argumentos base:", settings.getArgsTemplate());
         filler(c);
-        note(c, "Use ${port} para a porta local do ambiente e ${name} para o nome dele. "
-                + "Confira os parâmetros aceitos pela sua versão com \"mcp-abap-adt --help\".");
+        note(c, "Use ${port} para a porta local e ${name} para o nome do ambiente. Os argumentos de conexão e de "
+                + "ferramentas (--env-path, --mcp, --exposition...) são acrescentados automaticamente.");
 
         endpointText = field(c, "Caminho do endpoint HTTP:", settings.getEndpointPath());
         filler(c);
-        note(c, "Confira no Console a URL que o servidor mostra ao subir (ex.: /mcp).");
+        note(c, "Padrão do mcp-abap-adt (fr0ster): /mcp/stream/http. Confira no Console ao subir o servidor.");
+
+        serviceKeysText = field(c, "Pasta das service keys:", settings.getServiceKeysDir());
+        browseDir(c, serviceKeysText);
 
         prefixText = field(c, "Prefixo do nome no Claude:", settings.getServerPrefix());
         filler(c);
@@ -82,7 +87,7 @@ public class SettingsDialog extends TitleAreaDialog {
         browse(c, claudeText, new String[] { "*.json", "*.*" });
 
         registerButton.addListener(SWT.Selection, e -> updateEnablement());
-        for (Text t : new Text[] { commandText, argsText, endpointText, prefixText, claudeText }) {
+        for (Text t : new Text[] { commandText, argsText, endpointText, prefixText, claudeText, serviceKeysText }) {
             t.addModifyListener(e -> validate());
         }
         updateEnablement();
@@ -107,6 +112,19 @@ public class SettingsDialog extends TitleAreaDialog {
             fd.setFilterExtensions(filters);
             fd.setFileName(target.getText());
             String path = fd.open();
+            if (path != null) {
+                target.setText(path);
+            }
+        });
+    }
+
+    private void browseDir(Composite c, Text target) {
+        Button b = new Button(c, SWT.PUSH);
+        b.setText("Procurar...");
+        b.addListener(SWT.Selection, e -> {
+            DirectoryDialog dd = new DirectoryDialog(getShell());
+            dd.setFilterPath(target.getText());
+            String path = dd.open();
             if (path != null) {
                 target.setText(path);
             }
@@ -143,6 +161,8 @@ public class SettingsDialog extends TitleAreaDialog {
             err = "Informe o executável do servidor MCP.";
         } else if (!argsText.getText().contains("${port}")) {
             err = "Os argumentos precisam conter ${port}, senão todos os ambientes usariam a mesma porta.";
+        } else if (serviceKeysText.getText().trim().isEmpty()) {
+            err = "Informe a pasta das service keys.";
         } else if (registerButton.getSelection() && claudeText.getText().trim().isEmpty()) {
             err = "Informe o arquivo de configuração do Claude Code.";
         }
@@ -162,6 +182,7 @@ public class SettingsDialog extends TitleAreaDialog {
         settings.setRegisterInClaude(registerButton.getSelection());
         settings.setRemoveOnStop(removeOnStopButton.getSelection());
         settings.setClaudeConfigPath(claudeText.getText().trim());
+        settings.setServiceKeysDir(serviceKeysText.getText().trim());
         super.okPressed();
     }
 

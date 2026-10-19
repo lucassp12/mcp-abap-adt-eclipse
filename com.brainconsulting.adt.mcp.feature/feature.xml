@@ -2,12 +2,13 @@
 <feature
       id="com.brainconsulting.adt.mcp.feature"
       label="MCP ABAP ADT Launcher"
-      version="1.0.0.qualifier"
+      version="1.1.0.qualifier"
       provider-name="Brain Consulting">
 
    <description>
-      View no Eclipse para cadastrar ambientes SAP e iniciar/parar o servidor mcp-abap-adt
-      de cada um, registrando-o automaticamente no Claude Code (~/.claude.json).
+      View no Eclipse para cadastrar ambientes SAP (on-premise e cloud) e iniciar/parar o servidor
+      mcp-abap-adt (fr0ster) de cada um, com todas as ferramentas e formas de conexão, registrando-o
+      automaticamente no Claude Code (~/.claude.json).
    </description>
 
    <copyright>
