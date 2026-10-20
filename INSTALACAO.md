@@ -19,17 +19,7 @@ Claude Code.
 | Node.js e mcp-abap-adt | **Não precisa no Windows x64**: vêm embutidos no plugin (1.2+). Em outras plataformas: Node.js LTS + `npm install -g @mcp-abap-adt/core` | Configurações da view |
 | Claude Code | Instalado e logado (necessário também para o botão ">_ Abrir Claude Code") | `claude --version` |
 
-### 1.2 Só para compilar o plugin
-
-Dispensável se você recebeu o `.zip` do update site pronto.
-
-| Item | Versão |
-|---|---|
-| JDK | 17 ou superior (ex.: Eclipse Temurin 21) |
-| Apache Maven | 3.9 ou superior, com o `bin` no PATH |
-| Internet | Acesso a `download.eclipse.org` e ao Maven Central no primeiro build |
-
-### 1.3 No sistema SAP
+### 1.2 No sistema SAP
 
 | Requisito | Onde verificar |
 |---|---|
@@ -38,7 +28,7 @@ Dispensável se você recebeu o `.zip` do update site pronto.
 | Serviço `/sap/bc/adt` ativo | SICF |
 | Usuário com autorização de desenvolvimento ADT | Objetos S_ADT_RES, S_DEVELOP (e S_TRANSPRT para transportes) |
 
-### 1.4 Requisitos extras por forma de conexão
+### 1.3 Requisitos extras por forma de conexão
 
 | Forma de conexão | O que precisa a mais |
 |---|---|
@@ -67,41 +57,30 @@ where mcp-abap-adt
 
 Depois, em **Configurações**, escolha "Executável instalado na máquina" e informe o caminho.
 
-### Passo 2: obter o update site do plugin
-
-**Opção A: recebeu o zip pronto.** Pule para o passo 3.
-
-**Opção B: compilar.** Descompacte `mcp-abap-adt-eclipse.zip` e, na pasta raiz:
-
-```cmd
-mvn clean verify
-```
-
-O update site sai em:
-
-```
-com.brainconsulting.adt.mcp.site\target\com.brainconsulting.adt.mcp.site-1.3.1-SNAPSHOT.zip
-```
-
-O primeiro build demora alguns minutos, porque baixa as dependências do Eclipse.
-
-### Passo 3: instalar no Eclipse
+### Passo 2: instalar no Eclipse
 
 > Confirme antes que o Eclipse e o ADT abrem normalmente. Instalar o plugin numa etapa
 > separada facilita identificar a causa se algo der errado.
 
-1. **Help → Install New Software… → Add… → Archive…** e selecione o zip do passo 2.
-2. Marque **Brain Consulting → MCP ABAP ADT Launcher** → **Next** → **Finish**.
-3. Aceite o aviso de conteúdo não assinado.
-4. Reinicie o Eclipse.
+O plugin é instalado pelo update site publicado no GitHub Pages:
 
-### Passo 4: abrir a view
+```
+https://lucassp12.github.io/mcp-abap-adt-eclipse/
+```
+
+1. No Eclipse, vá em **Help → Install New Software… → Add…**.
+2. Em **Name**, digite `MCP ABAP ADT Launcher`. Em **Location**, cole o endereço acima e clique em **Add**.
+3. Marque **Brain Consulting → MCP ABAP ADT Launcher**, clique em **Next** e depois em **Finish**.
+4. Aceite o aviso de conteúdo não assinado.
+5. Reinicie o Eclipse.
+
+### Passo 3: abrir a view
 
 **Window → Show View → Other… → Brain Consulting → MCP ABAP ADT**
 
-### Passo 5: configurações iniciais
+### Passo 4: configurações iniciais
 
-No menu da view (▾), abra **Configurações…** e confira:
+Clique com o botão direito na tabela da view (ou use o menu ⋮ da view), abra **Configurações…** e confira:
 
 | Campo | Valor esperado |
 |---|---|
@@ -111,16 +90,17 @@ No menu da view (▾), abra **Configurações…** e confira:
 | Pasta das service keys | `%USERPROFILE%\Documents\mcp-abap-adt\service-keys` |
 | Registrar no Claude Code | Marcado |
 
-### Passo 6: cadastrar o primeiro ambiente
+### Passo 5: cadastrar o primeiro ambiente
 
 1. Clique em **+ Adicionar**.
 2. Na aba **Conexão**, preencha o nome e escolha a **forma de conexão** e o **tipo de sistema**
    (On-premise ou Cloud). Os campos mudam conforme a escolha.
-3. Na aba **Ferramentas**, mantenha os três grupos marcados para ter todas as ferramentas.
+3. Na aba **Ferramentas**, mantenha o padrão **Leitura + Alto nível**. Alto e baixo nível não podem ser
+   usados juntos: o servidor recusa essa combinação.
 4. Salve e clique em **Testar conexão**. Só siga quando o resultado for positivo.
 5. Clique em **▶ Iniciar** e acompanhe o log no Console do Eclipse.
 
-### Passo 7: usar no Claude Code
+### Passo 6: usar no Claude Code
 
 O jeito mais simples é selecionar o ambiente na view e clicar em **>_ Abrir Claude Code**: o
 plugin inicia o servidor, espera ele responder e abre o Claude Code na pasta de trabalho do
@@ -139,7 +119,7 @@ Para usar uma sessão do Claude Code que você abriu por conta própria:
 - [ ] Servidor MCP: "Embutido no plugin" disponível em **Configurações** (Windows x64)
 - [ ] Eclipse e ADT abrem sem erro antes da instalação
 - [ ] Plugin instalado e view **MCP ABAP ADT** visível
-- [ ] Executável e endpoint conferidos em **Configurações**
+- [ ] Endpoint `/mcp/stream/http` conferido em **Configurações**
 - [ ] Ambiente cadastrado e **Testar conexão** com resultado positivo
 - [ ] Servidor iniciado (status "● Rodando")
 - [ ] Servidor visível em `/mcp` no Claude Code
@@ -148,7 +128,9 @@ Para usar uma sessão do Claude Code que você abriu por conta própria:
 
 ## 4. Atualizar e desinstalar
 
-**Atualizar:** instale o novo zip pelo mesmo caminho do passo 3. Ambientes e senhas são mantidos.
+**Atualizar:** use **Help → Check for Updates**. Ambientes e senhas são mantidos. Se o Eclipse
+disser que não há atualizações logo depois de uma publicação, vá em **Window → Preferences →
+Install/Update → Available Software Sites**, selecione o site e clique em **Reload**.
 
 **Desinstalar:**
 1. Pare todos os servidores na view. Isso remove as entradas do `~/.claude.json`.
@@ -177,11 +159,12 @@ o arquivo na mesma pasta e só digita a própria senha.
 
 | Sintoma | O que fazer |
 |---|---|
-| `mvn` não é reconhecido | Instale o Maven e adicione a pasta `bin` ao PATH |
-| Build falha baixando dependências | Verifique o acesso a `download.eclipse.org` (proxy corporativo) |
+| "No repository found" ao adicionar o site | Confira o endereço (com `/` no final, sem `index.html`) e se ele abre no navegador; depois use **Reload** em **Available Software Sites** |
+| Eclipse não encontra atualização | **Reload** do site em **Available Software Sites** e tente de novo |
 | Eclipse não abre depois de instalar | Rode `eclipse.exe -clean -consoleLog` e verifique o log em `configuration\*.log` |
 | View não aparece na lista | Confirme a instalação em **Installation Details** e reinicie com `-clean` |
-| "Executável não encontrado" ao iniciar | Ajuste o caminho em **Configurações** com o resultado do `where` |
+| "Servidor embutido não disponível" | O servidor embutido é só para Windows x64; em outras plataformas, escolha "Executável instalado na máquina" em **Configurações** |
+| "Claude Code não encontrado" | Rode `where.exe claude` no PowerShell e informe o caminho em **Configurações → Executável do claude** |
 | "Tempo esgotado ao conectar" no teste | VPN, porta do ICM (SMICM) ou firewall |
 | Servidor não aparece no Claude Code | Abra uma nova sessão e confira o endpoint `/mcp/stream/http` |
 
