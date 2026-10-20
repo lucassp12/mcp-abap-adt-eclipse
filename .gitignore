@@ -5,3 +5,5 @@ com.brainconsulting.adt.mcp.runtime.win32.x86_64/runtime/node/
 com.brainconsulting.adt.mcp.runtime.win32.x86_64/runtime/server/
 com.brainconsulting.adt.mcp.runtime.win32.x86_64/runtime/runtime.properties
 com.brainconsulting.adt.mcp.runtime.win32.x86_64/runtime/THIRD-PARTY.txt
+claude.md
+deploy/
