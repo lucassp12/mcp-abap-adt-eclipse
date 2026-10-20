@@ -107,27 +107,46 @@ usá-la, aponte o executável para ele em **Configurações**.
 
 ## Requisitos
 
-- Eclipse 2024-03 ou mais novo, Java 17+.
+- Eclipse 2024-03 ou mais novo, com Java 17+.
 - Windows x64: nada além do plugin (Node.js e servidor embutidos).
 - Outras plataformas, ou para usar outra versão do servidor: `npm install -g @mcp-abap-adt/core`.
-- Para compilar o plugin: JDK 17+ e Maven 3.9+.
+- Claude Code instalado, para o botão **>_ Abrir Claude Code** (`claude --version`).
 
-## Compilar e instalar
+## Instalar
 
-```cmd
-mvn clean verify
+O plugin é instalado pelo update site publicado no GitHub Pages:
+
+```
+https://lucassp12.github.io/mcp-abap-adt-eclipse/
 ```
 
-1. Vá em **Help → Install New Software… → Add… → Archive…** e escolha
-   `com.brainconsulting.adt.mcp.site\target\com.brainconsulting.adt.mcp.site-1.1.0-SNAPSHOT.zip`.
-2. Marque **Brain Consulting → MCP ABAP ADT Launcher**, avance e reinicie o Eclipse.
-3. Abra **Window → Show View → Other… → Brain Consulting → MCP ABAP ADT**.
+1. No Eclipse, vá em **Help → Install New Software… → Add…**.
+2. Em **Name**, digite `MCP ABAP ADT Launcher`. Em **Location**, cole o endereço acima e clique em **Add**.
+3. Marque **Brain Consulting → MCP ABAP ADT Launcher**, clique em **Next** e depois em **Finish**.
+4. Aceite o aviso de conteúdo não assinado e reinicie o Eclipse.
+5. Abra a view em **Window → Show View → Other… → Brain Consulting → MCP ABAP ADT**.
 
-Para atualizar a partir da 1.0, instale da mesma forma. Os ambientes e senhas são mantidos.
+## Atualizar
+
+Com o site cadastrado, use **Help → Check for Updates**. Os ambientes e as senhas são mantidos.
+
+Se o Eclipse disser que não há atualizações logo depois de uma publicação, vá em
+**Window → Preferences → Install/Update → Available Software Sites**, selecione o site e clique
+em **Reload**.
+
+## Publicar uma versão nova (mantenedores)
+
+O build e a publicação são automáticos: cada push na branch `main` dispara o GitHub Actions,
+que compila o plugin e atualiza o update site. Para publicar:
+
+1. Suba a versão em `pom.xml` (raiz e módulos), nos dois `MANIFEST.MF` e no `feature.xml`.
+2. Faça commit, crie a tag `vX.Y.Z` e faça push.
+3. Acompanhe a aba **Actions** até o build ficar verde.
 
 ## Usar
 
-1. **Configurações…** (menu ▾ da view): confira o executável (`where mcp-abap-adt`).
+1. **Configurações…** (botão direito na tabela, ou menu ⋮ da view): confira se **Servidor MCP**
+   está como **Embutido no plugin**.
 2. **+ Adicionar**: escolha a forma de conexão e preencha os campos que aparecem.
 3. **Testar conexão**: o diagnóstico depende do método (login, certificado, Negotiate, service
    key, `.env`).
